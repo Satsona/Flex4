@@ -4,6 +4,7 @@ using UnityEngine;
 
 /// <summary>
 /// One-time (or re-runnable) setup: replaces capsule mesh on Player prefab with Ch14 + AC_Ch14 animator.
+/// Also wires the ThirdPersonPlayer.animator reference automatically.
 /// </summary>
 public static class PlayerCh14Setup
 {
@@ -11,7 +12,6 @@ public static class PlayerCh14Setup
     const string Ch14ModelPath = "Assets/Characters/Ch14/Ch14_nonPBR.fbx";
     const string AnimatorControllerPath = "Assets/Characters/Ch14/Animations/AC_Ch14.controller";
 
-    /// <summary>Batch mode: <c>-executeMethod PlayerCh14Setup.RunFromBatch</c></summary>
     public static void RunFromBatch()
     {
         AttachCh14ToPlayerPrefab();
@@ -23,6 +23,7 @@ public static class PlayerCh14Setup
     public static void AttachCh14ToPlayerPrefab()
     {
         var root = PrefabUtility.LoadPrefabContents(PlayerPrefabPath);
+
         try
         {
             RemoveComponentIfExists<MeshFilter>(root);
@@ -40,19 +41,29 @@ public static class PlayerCh14Setup
                 return;
             }
 
+            var controllerAsset =
+                AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(AnimatorControllerPath);
+            if (controllerAsset == null)
+            {
+                Debug.LogError($"Missing animator controller at {AnimatorControllerPath}");
+                return;
+            }
+
             var instance = (GameObject)PrefabUtility.InstantiatePrefab(ch14Asset, root.transform);
             instance.name = "Ch14_nonPBR";
             instance.transform.localPosition = Vector3.zero;
             instance.transform.localRotation = Quaternion.identity;
             instance.transform.localScale = Vector3.one;
 
-            var animator = instance.GetComponentInChildren<Animator>();
-            if (animator != null)
+            var animator = instance.GetComponentInChildren<Animator>(true);
+            if (animator == null)
             {
-                animator.runtimeAnimatorController =
-                    AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(AnimatorControllerPath);
-                animator.applyRootMotion = false;
+                Debug.LogError("No Animator found under Ch14 model.");
+                return;
             }
+
+            animator.runtimeAnimatorController = controllerAsset;
+            animator.applyRootMotion = false;
 
             var cc = root.GetComponent<CharacterController>();
             if (cc != null)
@@ -62,8 +73,15 @@ public static class PlayerCh14Setup
                 cc.center = new Vector3(0f, 1f, 0f);
             }
 
+            var playerScript = root.GetComponent<ThirdPersonPlayer>();
+            if (playerScript != null)
+            {
+                playerScript.animator = animator;
+                EditorUtility.SetDirty(playerScript);
+            }
+
             PrefabUtility.SaveAsPrefabAsset(root, PlayerPrefabPath);
-            Debug.Log("Player prefab updated with Ch14.");
+            Debug.Log("Player prefab updated with Ch14 and animator wired.");
         }
         finally
         {
