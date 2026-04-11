@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 1171405872626799306}
   - component: {fileID: 3277273493514504748}
   - component: {fileID: 8195317701645364920}
+  - component: {fileID: 5011223344556677889}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -227,4 +228,29 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerNetwork
   ShowTopMostFoldoutHeaderGroup: 1
-  speed: 5
+--- !u!114 &5011223344556677889
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4134969945857699508}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c8d4a2e65031497b9e1f2c3d4b5a6e7f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ThirdPersonPlayer
+  moveSpeed: 5
+  gravity: -20
+  jumpHeight: 1.25
+  mouseSensitivity: 2
+  cameraDistance: 2.75
+  pivotHeight: 1.35
+  minPitch: -8
+  maxPitch: 48
+  lookAtHeight: 1.35
+  showCrosshair: 1
+  crosshairColor: {r: 1, g: 1, b: 1, a: 0.9}
+  crosshairArmLength: 10
+  crosshairThickness: 2
+  crosshairGap: 4
