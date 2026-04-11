@@ -8,11 +8,16 @@ using Unity.Netcode;
 [RequireComponent(typeof(CharacterController))]
 public class ThirdPersonPlayer : MonoBehaviour
 {
+    static readonly int RunningParam = Animator.StringToHash("Running");
+    static readonly int JumpingParam = Animator.StringToHash("Jumping");
+
     [Header("Movement")]
     public float moveSpeed = 6f;
     public float gravity = -20f;
     [Tooltip("Jump height in meters (uses CharacterController grounded check).")]
     public float jumpHeight = 1.25f;
+    [Tooltip("How fast the character turns toward move direction (degrees/sec).")]
+    public float rotationSpeed = 540f;
 
     [Header("Camera orbit")]
     public float mouseSensitivity = 2f;
@@ -27,6 +32,10 @@ public class ThirdPersonPlayer : MonoBehaviour
     [Tooltip("Aim point height above feet for the camera to look at.")]
     public float lookAtHeight = 1.35f;
 
+    [Header("Animation")]
+    [Tooltip("Optional; auto-found under this object (e.g. Ch14 child).")]
+    public Animator animator;
+
     [Header("Crosshair (temporary — disable or remove later)")]
     public bool showCrosshair = true;
     public Color crosshairColor = new Color(1f, 1f, 1f, 0.9f);
@@ -36,20 +45,29 @@ public class ThirdPersonPlayer : MonoBehaviour
     [Tooltip("Empty space at screen center between the four arms.")]
     public float crosshairGap = 4f;
 
-    private CharacterController controller;
-    private Camera mainCamera;
-    private NetworkObject networkObject;
+    CharacterController controller;
+    Camera mainCamera;
+    NetworkObject networkObject;
 
-    private float yaw;
-    private float pitch;
-    private float verticalVelocity;
+    float yaw;
+    float pitch;
+    float verticalVelocity;
 
-    private static Texture2D s_whitePixel;
+    bool hasJumpTrigger;
+
+    static Texture2D s_whitePixel;
 
     void Awake()
     {
         controller = GetComponent<CharacterController>();
         networkObject = GetComponent<NetworkObject>();
+        if (animator == null)
+            animator = GetComponentInChildren<Animator>(true);
+        if (animator != null)
+        {
+            animator.applyRootMotion = false;
+            hasJumpTrigger = AnimatorHasTrigger(animator, "Jumping");
+        }
     }
 
     void Start()
@@ -94,18 +112,52 @@ public class ThirdPersonPlayer : MonoBehaviour
         if (move.sqrMagnitude > 1f)
             move.Normalize();
 
-        if (controller.isGrounded)
+        bool grounded = controller.isGrounded;
+        bool wantsRunAnim =
+            grounded && (Mathf.Abs(h) > 0.01f || Mathf.Abs(v) > 0.01f);
+        if (animator != null)
+            animator.SetBool(RunningParam, wantsRunAnim);
+
+        Vector3 face = new Vector3(move.x, 0f, move.z);
+        if (face.sqrMagnitude > 1e-6f)
+        {
+            Quaternion target = Quaternion.LookRotation(face.normalized);
+            transform.rotation = Quaternion.RotateTowards(
+                transform.rotation,
+                target,
+                rotationSpeed * Time.deltaTime);
+        }
+
+        bool jumped = false;
+        if (grounded)
         {
             if (verticalVelocity < 0f)
                 verticalVelocity = -2f;
             if (Input.GetButtonDown("Jump"))
+            {
                 verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
+                jumped = true;
+            }
         }
+
+        if (jumped && animator != null && hasJumpTrigger)
+            animator.SetTrigger(JumpingParam);
 
         verticalVelocity += gravity * Time.deltaTime;
 
         Vector3 velocity = move * moveSpeed + Vector3.up * verticalVelocity;
         controller.Move(velocity * Time.deltaTime);
+    }
+
+    static bool AnimatorHasTrigger(Animator anim, string triggerName)
+    {
+        foreach (var p in anim.parameters)
+        {
+            if (p.type == AnimatorControllerParameterType.Trigger && p.name == triggerName)
+                return true;
+        }
+
+        return false;
     }
 
     void OnGUI()
