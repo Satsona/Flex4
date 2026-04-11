@@ -34,15 +34,16 @@ public class ThirdPersonPlayer : NetworkBehaviour
     public float crosshairThickness = 2f;
     public float crosshairGap = 4f;
 
-    CharacterController controller;
-    Camera mainCamera;
+    private CharacterController controller;
+    private Camera mainCamera;
 
-    float yaw;
-    float pitch;
-    float verticalVelocity;
+    private float yaw;
+    private float pitch;
+    private bool hasJumpTrigger;
+    private Vector3 lastPosition;
 
-    bool hasJumpTrigger;
-    Vector3 lastPosition;
+    // Server tarafında tutulacak düşey hız
+    private readonly NetworkVariable<float> netVerticalVelocity = new NetworkVariable<float>(0f);
 
     static Texture2D s_whitePixel;
 
@@ -77,7 +78,7 @@ public class ThirdPersonPlayer : NetworkBehaviour
             pitch = 12f;
         }
 
-        if (ShouldControl())
+        if (IsOwner)
             Cursor.lockState = CursorLockMode.Locked;
 
         lastPosition = transform.position;
@@ -85,17 +86,15 @@ public class ThirdPersonPlayer : NetworkBehaviour
 
     void Update()
     {
-        bool isOwner = ShouldControl();
+        if (IsOwner)
+            UpdateOwnerInputAndCamera();
 
-        if (isOwner)
-            UpdateOwnerInputAndMovement();
-        else
-            UpdateRemoteAnimation();
+        UpdateAnimation();
 
         lastPosition = transform.position;
     }
 
-    void UpdateOwnerInputAndMovement()
+    void UpdateOwnerInputAndCamera()
     {
         if (Input.GetKeyDown(KeyCode.Escape))
             Cursor.lockState = CursorLockMode.None;
@@ -105,6 +104,7 @@ public class ThirdPersonPlayer : NetworkBehaviour
 
         float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity;
         float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity;
+
         yaw += mouseX;
         pitch = Mathf.Clamp(pitch - mouseY, minPitch, maxPitch);
 
@@ -112,8 +112,15 @@ public class ThirdPersonPlayer : NetworkBehaviour
 
         float h = Input.GetAxisRaw("Horizontal");
         float v = Input.GetAxisRaw("Vertical");
+        bool jumpPressed = Input.GetButtonDown("Jump");
 
-        Quaternion yawRot = Quaternion.Euler(0f, yaw, 0f);
+        SubmitMovementServerRpc(h, v, yaw, jumpPressed);
+    }
+
+    [ServerRpc]
+    void SubmitMovementServerRpc(float h, float v, float ownerYaw, bool jumpPressed)
+    {
+        Quaternion yawRot = Quaternion.Euler(0f, ownerYaw, 0f);
         Vector3 forward = yawRot * Vector3.forward;
         Vector3 right = yawRot * Vector3.right;
         Vector3 move = forward * v + right * h;
@@ -122,10 +129,24 @@ public class ThirdPersonPlayer : NetworkBehaviour
             move.Normalize();
 
         bool grounded = controller.isGrounded;
-        bool wantsRunAnim = grounded && (Mathf.Abs(h) > 0.01f || Mathf.Abs(v) > 0.01f);
 
-        if (animator != null)
-            animator.SetBool(RunningParam, wantsRunAnim);
+        if (grounded)
+        {
+            if (netVerticalVelocity.Value < 0f)
+                netVerticalVelocity.Value = -2f;
+
+            if (jumpPressed)
+            {
+                netVerticalVelocity.Value = Mathf.Sqrt(jumpHeight * -2f * gravity);
+
+                if (animator != null && hasJumpTrigger)
+                    animator.SetTrigger(JumpingParam);
+
+                PlayJumpTriggerClientRpc();
+            }
+        }
+
+        netVerticalVelocity.Value += gravity * Time.deltaTime;
 
         Vector3 face = new Vector3(move.x, 0f, move.z);
         if (face.sqrMagnitude > 1e-6f)
@@ -138,36 +159,21 @@ public class ThirdPersonPlayer : NetworkBehaviour
             );
         }
 
-        bool jumped = false;
-
-        if (grounded)
-        {
-            if (verticalVelocity < 0f)
-                verticalVelocity = -2f;
-
-            if (Input.GetButtonDown("Jump"))
-            {
-                verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
-                jumped = true;
-            }
-        }
-
-        if (jumped && animator != null && hasJumpTrigger)
-        {
-            animator.SetTrigger(JumpingParam); // owner kendi ekranında hemen görsün
-            SendJumpTriggerServerRpc();        // diğerlerine de gitsin
-        }
-
-        verticalVelocity += gravity * Time.deltaTime;
-
-        Vector3 velocity = move * moveSpeed + Vector3.up * verticalVelocity;
+        Vector3 velocity = move * moveSpeed + Vector3.up * netVerticalVelocity.Value;
         controller.Move(velocity * Time.deltaTime);
+
+        bool wantsRunAnim = grounded && (Mathf.Abs(h) > 0.01f || Mathf.Abs(v) > 0.01f);
+        if (animator != null)
+            animator.SetBool(RunningParam, wantsRunAnim);
     }
 
-    void UpdateRemoteAnimation()
+    void UpdateAnimation()
     {
         if (animator == null)
             return;
+
+        if (IsServer)
+            return; // server owner zaten animi movement sırasında set ediyor
 
         Vector3 delta = transform.position - lastPosition;
         delta.y = 0f;
@@ -176,17 +182,11 @@ public class ThirdPersonPlayer : NetworkBehaviour
         animator.SetBool(RunningParam, isRunning);
     }
 
-    [ServerRpc]
-    void SendJumpTriggerServerRpc()
-    {
-        PlayJumpTriggerClientRpc();
-    }
-
     [ClientRpc]
     void PlayJumpTriggerClientRpc()
     {
-        if (IsOwner)
-            return; // owner zaten kendi tarafında oynattı
+        if (IsServer)
+            return; // server zaten trigger attı
 
         if (animator != null && hasJumpTrigger)
             animator.SetTrigger(JumpingParam);
@@ -204,7 +204,7 @@ public class ThirdPersonPlayer : NetworkBehaviour
 
     void OnGUI()
     {
-        if (!showCrosshair || !ShouldControl() || Cursor.lockState != CursorLockMode.Locked)
+        if (!showCrosshair || !IsOwner || Cursor.lockState != CursorLockMode.Locked)
             return;
 
         float cx = Screen.width * 0.5f;
@@ -239,11 +239,6 @@ public class ThirdPersonPlayer : NetworkBehaviour
         }
     }
 
-    bool ShouldControl()
-    {
-        return IsSpawned && IsOwner;
-    }
-
     void UpdateCamera()
     {
         if (mainCamera == null)
@@ -262,8 +257,4 @@ public class ThirdPersonPlayer : NetworkBehaviour
         mainCamera.transform.position = camPos;
         mainCamera.transform.LookAt(transform.position + Vector3.up * lookAtHeight);
     }
-    
-    
-        
-    }
-
+}
