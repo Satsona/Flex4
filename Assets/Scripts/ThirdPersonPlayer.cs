@@ -262,4 +262,8 @@ public class ThirdPersonPlayer : NetworkBehaviour
         mainCamera.transform.position = camPos;
         mainCamera.transform.LookAt(transform.position + Vector3.up * lookAtHeight);
     }
-}
+    
+    
+        
+    }
+
