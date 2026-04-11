@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 5db330d66a85b524e88212e9e74700f7
+guid: 4b99ca1a5394a014d9dba158a6d86741
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable: []
@@ -31,22 +31,22 @@ ModelImporter:
     extraUserProperties: []
     clipAnimations:
     - serializedVersion: 16
-      name: BreathingIdle
+      name: Aiming
       takeName: mixamo.com
       internalID: -203655887218126122
       firstFrame: 0
-      lastFrame: 595
+      lastFrame: 68
       wrapMode: 0
-      orientationOffsetY: 0
+      orientationOffsetY: 40
       level: 0
       cycleOffset: 0
       loop: 0
       hasAdditiveReferencePose: 0
       loopTime: 1
       loopBlend: 0
-      loopBlendOrientation: 0
-      loopBlendPositionY: 0
-      loopBlendPositionXZ: 0
+      loopBlendOrientation: 1
+      loopBlendPositionY: 1
+      loopBlendPositionXZ: 1
       keepOriginalOrientation: 0
       keepOriginalPositionY: 1
       keepOriginalPositionXZ: 0
@@ -788,7 +788,8 @@ ModelImporter:
     hasTranslationDoF: 0
     hasExtraRoot: 1
     skeletonHasParents: 1
-  lastHumanDescriptionAvatarSource: {fileID: 9000000, guid: f40a4c120f884b6458841de83d4cc755, type: 3}
+  lastHumanDescriptionAvatarSource: {fileID: 9000000, guid: f40a4c120f884b6458841de83d4cc755,
+    type: 3}
   autoGenerateAvatarMappingIfUnspecified: 1
   animationType: 3
   humanoidOversampling: 1
