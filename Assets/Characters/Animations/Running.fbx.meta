@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 5db330d66a85b524e88212e9e74700f7
+guid: 20359023f489ba84e90a3d9dec5fcab1
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable: []
@@ -31,11 +31,11 @@ ModelImporter:
     extraUserProperties: []
     clipAnimations:
     - serializedVersion: 16
-      name: BreathingIdle
+      name: Running
       takeName: mixamo.com
       internalID: -203655887218126122
       firstFrame: 0
-      lastFrame: 595
+      lastFrame: 35
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -788,7 +788,8 @@ ModelImporter:
     hasTranslationDoF: 0
     hasExtraRoot: 1
     skeletonHasParents: 1
-  lastHumanDescriptionAvatarSource: {fileID: 9000000, guid: f40a4c120f884b6458841de83d4cc755, type: 3}
+  lastHumanDescriptionAvatarSource: {fileID: 9000000, guid: f40a4c120f884b6458841de83d4cc755,
+    type: 3}
   autoGenerateAvatarMappingIfUnspecified: 1
   animationType: 3
   humanoidOversampling: 1
