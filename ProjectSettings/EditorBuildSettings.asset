@@ -17,6 +17,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/MapTest.unity
     guid: c4b92e6b42d231c47aba55bd186924f2
+  - enabled: 1
+    path: Assets/Scenes/GraveyardLevel.unity
+    guid: 6aeeee2f81c25644cbd0435b21c0a92d
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0
