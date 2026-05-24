@@ -7,7 +7,9 @@ public class BulletProjectile : MonoBehaviour
     private float lifetime = 3f;
     private float spawnedAt;
 
-    public void Initialize(Vector3 shootDirection, float shootSpeed, float lifeSeconds)
+    private ulong shooterClientId;
+
+    public void Initialize(Vector3 shootDirection, float shootSpeed, float lifeSeconds, ulong shooterId)
     {
         if (shootDirection.sqrMagnitude > 0.0001f)
             direction = shootDirection.normalized;
@@ -15,6 +17,7 @@ public class BulletProjectile : MonoBehaviour
         speed = Mathf.Max(0f, shootSpeed);
         lifetime = Mathf.Max(0.01f, lifeSeconds);
         spawnedAt = Time.time;
+        shooterClientId = shooterId;
     }
 
     void Awake()
@@ -39,7 +42,7 @@ public class BulletProjectile : MonoBehaviour
 
         if (player != null)
         {
-            player.KillAndRespawn();
+            player.KillAndRespawn(shooterClientId);
         }
 
         Destroy(gameObject);

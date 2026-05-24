@@ -1,5 +1,5 @@
-using UnityEngine;
 using Unity.Netcode;
+using UnityEngine;
 
 [RequireComponent(typeof(CharacterController))]
 public class ThirdPersonPlayer : NetworkBehaviour
@@ -17,6 +17,10 @@ public class ThirdPersonPlayer : NetworkBehaviour
     public Vector3 randomRespawnMax = new Vector3(5f, 1f, 5f);
 
     private bool isDead;
+
+    [Header("Score")]
+    public NetworkVariable<int> kills = new NetworkVariable<int>(0);
+    public NetworkVariable<int> deaths = new NetworkVariable<int>(0);
 
     [Header("Movement")]
     public float moveSpeed = 6f;
@@ -347,7 +351,7 @@ public class ThirdPersonPlayer : NetworkBehaviour
         PlayShootingTriggerClientRpc();
 
         Vector3 origin = ResolveBulletOrigin(shotDirection);
-        SpawnBulletClientRpc(origin, shotDirection);
+        SpawnBulletClientRpc(origin, shotDirection, OwnerClientId);
         StartCoroutine(ConsumeGunAfterShot());
     }
 
@@ -359,7 +363,7 @@ public class ThirdPersonPlayer : NetworkBehaviour
         return transform.position + Vector3.up * lookAtHeight + shotDirection * bulletSpawnDistance;
     }
 
-    void SpawnLocalBullet(Vector3 origin, Vector3 direction)
+    void SpawnLocalBullet(Vector3 origin, Vector3 direction, ulong shooterClientId)
     {
         GameObject instance;
 
@@ -389,7 +393,7 @@ public class ThirdPersonPlayer : NetworkBehaviour
         body.useGravity = false;
         body.isKinematic = true;
 
-        projectile.Initialize(direction, bulletSpeed, bulletLifetime);
+        projectile.Initialize(direction, bulletSpeed, bulletLifetime, shooterClientId);
     }
 
     public bool TryPickUpWeapon(WeaponPickup pickup)
@@ -562,9 +566,9 @@ public class ThirdPersonPlayer : NetworkBehaviour
     }
 
     [ClientRpc]
-    void SpawnBulletClientRpc(Vector3 origin, Vector3 direction)
+    void SpawnBulletClientRpc(Vector3 origin, Vector3 direction, ulong shooterClientId)
     {
-        SpawnLocalBullet(origin, direction);
+        SpawnLocalBullet(origin, direction, shooterClientId);
     }
 
     [ClientRpc]
@@ -698,10 +702,29 @@ public class ThirdPersonPlayer : NetworkBehaviour
         mainCamera.transform.position = camPos;
         mainCamera.transform.LookAt(transform.position + Vector3.up * lookAtHeight);
     }
-    public void KillAndRespawn()
+    public void KillAndRespawn(ulong killerClientId)
     {
         if (!IsServer || isDead)
             return;
+
+        // Ölen kişinin death sayısı
+        deaths.Value++;
+
+        Debug.Log($"Player {OwnerClientId} öldü! Deaths: {deaths.Value}");
+
+        // Killer kendini vurmadıysa kill alsın
+        if (killerClientId != OwnerClientId &&
+            NetworkManager.Singleton.ConnectedClients.TryGetValue(killerClientId, out var killerClient))
+        {
+            ThirdPersonPlayer killerPlayer = killerClient.PlayerObject.GetComponent<ThirdPersonPlayer>();
+
+            if (killerPlayer != null)
+            {
+                killerPlayer.kills.Value++;
+
+                Debug.Log($"Player {killerClientId} kill aldı! Kills: {killerPlayer.kills.Value}");
+            }
+        }
 
         StartCoroutine(RespawnRoutine());
     }
