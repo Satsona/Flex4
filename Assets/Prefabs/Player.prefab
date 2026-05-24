@@ -157,6 +157,21 @@ MonoBehaviour:
   lookAtHeight: 1.35
   animator: {fileID: 0}
   remoteMoveThreshold: 0.0001
+  heldWeaponObjectName: Gun
+  heldWeapon: {fileID: 0}
+  equipWeaponDelay: 0.35
+  bulletPrefab: {fileID: 0}
+  firePoint: {fileID: 0}
+  bulletSpeed: 35
+  bulletLifetime: 3
+  fireCooldown: 0.35
+  aimBeforeShotDelay: 0.45
+  postShotAimTime: 0
+  consumeGunAfterShotDelay: 0.85
+  droppedGunLifetime: 1.5
+  droppedGunForwardForce: 1.5
+  bulletSpawnDistance: 0.65
+  fallbackBulletRadius: 0.06
   showCrosshair: 1
   crosshairColor: {r: 1, g: 1, b: 1, a: 0.9}
   crosshairArmLength: 10

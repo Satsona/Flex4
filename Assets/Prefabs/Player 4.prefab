@@ -19,7 +19,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &7026797949113727559
 Transform:
   m_ObjectHideFlags: 0
@@ -157,6 +157,21 @@ MonoBehaviour:
   lookAtHeight: 1.35
   animator: {fileID: 0}
   remoteMoveThreshold: 0.0001
+  heldWeaponObjectName: Gun
+  heldWeapon: {fileID: 0}
+  equipWeaponDelay: 0.35
+  bulletPrefab: {fileID: 0}
+  firePoint: {fileID: 0}
+  bulletSpeed: 35
+  bulletLifetime: 3
+  fireCooldown: 0.35
+  aimBeforeShotDelay: 0.45
+  postShotAimTime: 0
+  consumeGunAfterShotDelay: 0.85
+  droppedGunLifetime: 1.5
+  droppedGunForwardForce: 1.5
+  bulletSpawnDistance: 0.65
+  fallbackBulletRadius: 0.06
   showCrosshair: 1
   crosshairColor: {r: 1, g: 1, b: 1, a: 0.9}
   crosshairArmLength: 10
@@ -246,31 +261,31 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 7142637515923658082, guid: 4d8de6316d12ef54698481aa31098f7e, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.0317
+      value: -0.008228593
       objectReference: {fileID: 0}
     - target: {fileID: 7142637515923658082, guid: 4d8de6316d12ef54698481aa31098f7e, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.2694
+      value: 0.24590962
       objectReference: {fileID: 0}
     - target: {fileID: 7142637515923658082, guid: 4d8de6316d12ef54698481aa31098f7e, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.0245
+      value: 0.029121168
       objectReference: {fileID: 0}
     - target: {fileID: 7142637515923658082, guid: 4d8de6316d12ef54698481aa31098f7e, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.067580484
+      value: 0.07296149
       objectReference: {fileID: 0}
     - target: {fileID: 7142637515923658082, guid: 4d8de6316d12ef54698481aa31098f7e, type: 3}
       propertyPath: m_LocalRotation.x
-      value: -0.7021281
+      value: -0.64141965
       objectReference: {fileID: 0}
     - target: {fileID: 7142637515923658082, guid: 4d8de6316d12ef54698481aa31098f7e, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0.7055756
+      value: 0.7611844
       objectReference: {fileID: 0}
     - target: {fileID: 7142637515923658082, guid: 4d8de6316d12ef54698481aa31098f7e, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0.067912295
+      value: -0.06209536
       objectReference: {fileID: 0}
     - target: {fileID: 7142637515923658082, guid: 4d8de6316d12ef54698481aa31098f7e, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -282,7 +297,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7142637515923658082, guid: 4d8de6316d12ef54698481aa31098f7e, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: -89.725
+      value: -80.244
       objectReference: {fileID: 0}
     - target: {fileID: 7517754996364038104, guid: 4d8de6316d12ef54698481aa31098f7e, type: 3}
       propertyPath: m_Name
@@ -290,7 +305,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7517754996364038104, guid: 4d8de6316d12ef54698481aa31098f7e, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
