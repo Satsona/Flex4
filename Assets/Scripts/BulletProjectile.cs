@@ -35,6 +35,13 @@ public class BulletProjectile : MonoBehaviour
         if (other.isTrigger)
             return;
 
+        ThirdPersonPlayer player = other.GetComponentInParent<ThirdPersonPlayer>();
+
+        if (player != null)
+        {
+            player.KillAndRespawn();
+        }
+
         Destroy(gameObject);
     }
 }
