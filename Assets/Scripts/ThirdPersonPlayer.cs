@@ -11,6 +11,13 @@ public class ThirdPersonPlayer : NetworkBehaviour
     static readonly int GroundedParam = Animator.StringToHash("Grounded");
     static readonly int PickingUpParam = Animator.StringToHash("PickingUp");
 
+    [Header("Respawn")]
+    public float respawnDelay = 3f;
+    public Vector3 randomRespawnMin = new Vector3(-5f, 1f, -5f);
+    public Vector3 randomRespawnMax = new Vector3(5f, 1f, 5f);
+
+    private bool isDead;
+
     [Header("Movement")]
     public float moveSpeed = 6f;
     public float gravity = -20f;
@@ -204,6 +211,9 @@ public class ThirdPersonPlayer : NetworkBehaviour
         bool shootPressed,
         Vector3 shotDirection)
     {
+        if (isDead)
+            return;
+
         Quaternion yawRot = Quaternion.Euler(0f, ownerYaw, 0f);
         Vector3 forward = yawRot * Vector3.forward;
         Vector3 right = yawRot * Vector3.right;
@@ -687,5 +697,53 @@ public class ThirdPersonPlayer : NetworkBehaviour
         Vector3 camPos = pivot + orbit * (Vector3.back * cameraDistance);
         mainCamera.transform.position = camPos;
         mainCamera.transform.LookAt(transform.position + Vector3.up * lookAtHeight);
+    }
+    public void KillAndRespawn()
+    {
+        if (!IsServer || isDead)
+            return;
+
+        StartCoroutine(RespawnRoutine());
+    }
+
+    System.Collections.IEnumerator RespawnRoutine()
+    {
+        isDead = true;
+
+        SetPlayerVisibleClientRpc(false);
+
+        controller.enabled = false;
+
+        yield return new WaitForSeconds(respawnDelay);
+
+        Vector3 respawnPos = new Vector3(
+            Random.Range(randomRespawnMin.x, randomRespawnMax.x),
+            Random.Range(randomRespawnMin.y, randomRespawnMax.y),
+            Random.Range(randomRespawnMin.z, randomRespawnMax.z)
+        );
+
+        transform.position = respawnPos;
+
+        netVerticalVelocity.Value = 0f;
+
+        controller.enabled = true;
+
+        SetPlayerVisibleClientRpc(true);
+
+        isDead = false;
+    }
+
+    [ClientRpc]
+    void SetPlayerVisibleClientRpc(bool visible)
+    {
+        foreach (Renderer r in GetComponentsInChildren<Renderer>(true))
+            r.enabled = visible;
+
+        foreach (Collider c in GetComponentsInChildren<Collider>(true))
+            c.enabled = visible;
+
+        CharacterController cc = GetComponent<CharacterController>();
+        if (cc != null)
+            cc.enabled = visible;
     }
 }
