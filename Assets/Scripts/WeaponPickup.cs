@@ -1,6 +1,7 @@
 using UnityEngine;
+using Unity.Netcode;
 
-public class WeaponPickup : MonoBehaviour
+public class WeaponPickup : NetworkBehaviour
 {
     public string weaponName = "Gun";
     public bool spinWhileAvailable = true;
@@ -9,6 +10,9 @@ public class WeaponPickup : MonoBehaviour
     public float pickupRadius = 0.85f;
 
     private bool available = true;
+
+    private WeaponSpawner ownerSpawner;
+    private WeaponSpawner.SpawnPointData ownerSpawnPoint;
 
     void Awake()
     {
@@ -30,16 +34,70 @@ public class WeaponPickup : MonoBehaviour
             return;
 
         ThirdPersonPlayer player = other.GetComponentInParent<ThirdPersonPlayer>();
-        if (player == null || !player.TryPickUpWeapon(this))
+
+        if (player == null)
+            return;
+
+        if (!player.TryPickUpWeapon(this))
             return;
 
         Collect();
     }
 
+    public void SetSpawner(WeaponSpawner spawner, WeaponSpawner.SpawnPointData spawnPoint)
+    {
+        ownerSpawner = spawner;
+        ownerSpawnPoint = spawnPoint;
+    }
+
     public void Collect()
     {
+        if (!available)
+            return;
+
         available = false;
-        gameObject.SetActive(false);
+
+        if (IsSpawned)
+        {
+            if (IsServer)
+            {
+                ServerCollect();
+            }
+            else
+            {
+                CollectServerRpc();
+                gameObject.SetActive(false);
+            }
+        }
+        else
+        {
+            gameObject.SetActive(false);
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    void CollectServerRpc()
+    {
+        if (!available)
+            return;
+
+        available = false;
+        ServerCollect();
+    }
+
+    void ServerCollect()
+    {
+        if (ownerSpawner != null)
+            ownerSpawner.MakePointAvailable(ownerSpawnPoint);
+
+        if (NetworkObject != null && NetworkObject.IsSpawned)
+        {
+            NetworkObject.Despawn(true);
+        }
+        else
+        {
+            gameObject.SetActive(false);
+        }
     }
 
     public static void ConfigureScenePickups(Transform playerRoot)
@@ -70,6 +128,7 @@ public class WeaponPickup : MonoBehaviour
                 continue;
 
             float distance = (pickup.transform.position - pickupPosition).sqrMagnitude;
+
             if (distance >= closestDistance)
                 continue;
 
@@ -84,6 +143,7 @@ public class WeaponPickup : MonoBehaviour
     void EnsurePickupPhysics()
     {
         Collider pickupCollider = GetComponent<Collider>();
+
         if (pickupCollider == null)
         {
             SphereCollider sphere = gameObject.AddComponent<SphereCollider>();
@@ -94,6 +154,7 @@ public class WeaponPickup : MonoBehaviour
         pickupCollider.isTrigger = true;
 
         Rigidbody body = GetComponent<Rigidbody>();
+
         if (body == null)
             body = gameObject.AddComponent<Rigidbody>();
 

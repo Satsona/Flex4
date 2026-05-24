@@ -33401,7 +33401,7 @@ MonoBehaviour:
     currentWeapon: {fileID: 5996229016629893233, guid: 4d8de6316d12ef54698481aa31098f7e, type: 3}
   - point: {fileID: 2116720605}
     currentWeapon: {fileID: 5996229016629893233, guid: 4d8de6316d12ef54698481aa31098f7e, type: 3}
-  spawnInterval: 15
+  spawnInterval: 1
 --- !u!4 &2031497878
 Transform:
   m_ObjectHideFlags: 0
